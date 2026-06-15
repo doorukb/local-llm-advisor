@@ -12,6 +12,8 @@ Local-LLM-Advisor reads your system hardware automatically, asks you a small set
 
 No hardcoded model lists. No stale recommendations. No free-text input surface for the LLM to drift on.
 
+<img width="952" height="559" alt="image" src="https://github.com/user-attachments/assets/ce55ed88-2aba-4f62-9d0a-b07404656252" />
+
 ---
 
 ## How It Works
