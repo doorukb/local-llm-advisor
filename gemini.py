@@ -138,9 +138,3 @@ def generate_report(system_prompt: str, user_prompt: str) -> str:
         return ERROR_UNEXPECTED_RESPONSE
 
     return text
-
-if __name__ == "__main__":
-    try:
-        print("API key loaded:", bool(load_api_key()))
-    except GeminiApiKeyNotFoundError as exc:
-        print(exc)
