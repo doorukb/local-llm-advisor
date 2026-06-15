@@ -21,6 +21,7 @@ PERFORMANCE_PRIORITY_OPTIONS = (
     "Balanced",
 )
 
+# get the selections from the dropdown menus and radio buttons
 def get_selections(
     engine_combo: ctk.CTkComboBox, # the inference engine dropdown menu
     use_case_combo: ctk.CTkComboBox, # the primary use case dropdown menu
@@ -34,28 +35,26 @@ def get_selections(
         "performance_priority": performance_priority_var.get(),
     }
 
-# add a radio group to the GUI
-def _add_radio_group(
-    parent: ctk.CTkFrame, # the parent frame
-    row: int, # the row number
-    label_text: str, # the label text
-    options: tuple[str, ...], # the options
-    variable: tk.StringVar, # the variable
+# analyze the selections and print the report
+def on_analyze(
+    engine_combo: ctk.CTkComboBox,
+    use_case_combo: ctk.CTkComboBox,
+    context_length_var: tk.StringVar,
+    performance_priority_var: tk.StringVar,
 ) -> None:
-    ctk.CTkLabel(parent, text=label_text).grid(
-        row=row, column=0, sticky="w", padx=(0, 12), pady=8
-    )
+    selections = get_selections(engine_combo, use_case_combo, context_length_var, performance_priority_var)
+    # replaced
+    print(selections)
+
+# add a radio group to the GUI
+def _add_radio_group(parent: ctk.CTkFrame, row: int, label_text: str, options: tuple[str, ...], variable: tk.StringVar) -> None:
+    ctk.CTkLabel(parent, text=label_text).grid(row=row, column=0, sticky="w", padx=(0, 12), pady=8)
     group_frame = ctk.CTkFrame(parent, fg_color="transparent")
     group_frame.grid(row=row, column=1, sticky="ew", pady=8)
     for col, option in enumerate(options):
-        ctk.CTkRadioButton(
-            group_frame,
-            text=option,
-            variable=variable,
-            value=option,
-        ).grid(row=0, column=col, sticky="w", padx=(0, 16))
+        ctk.CTkRadioButton(group_frame, text=option, variable=variable, value=option).grid(row=0, column=col, sticky="w", padx=(0, 16))
 
-# open the main window and block until the user closes it
+# open the main window and block until the user closes it; Analyze button and report area
 def run_gui() -> None:
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("blue")
@@ -104,6 +103,24 @@ def run_gui() -> None:
         options=PERFORMANCE_PRIORITY_OPTIONS,
         variable=performance_priority_var,
     )
+    analyze_button = ctk.CTkButton(
+        input_frame,
+        text="Analyze",
+        command=lambda: on_analyze(engine_combo, use_case_combo, context_length_var, performance_priority_var)
+    )
+    analyze_button.grid(row=4, column=1, sticky="w", pady=(8, 0))
+
+    report_frame = ctk.CTkFrame(window, fg_color="transparent")
+    report_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=(0, 20))
+    report_frame.grid_columnconfigure(0, weight=1)
+    report_frame.grid_rowconfigure(1, weight=1)
+
+    ctk.CTkLabel(report_frame, text="Report").grid(row=0, column=0, sticky="w", pady=(0, 8))
+
+
+    report_text = ctk.CTkTextbox(report_frame, state="disabled", wrap="word")
+    report_text.grid(row=1, column=0, sticky="nsew")
+
     window.mainloop()
 
 if __name__ == "__main__":
