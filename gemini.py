@@ -5,6 +5,7 @@ from pathlib import Path
 import google.generativeai as genai
 
 GEMINI_MODEL = "gemini-1.5-flash"
+GEMINI_TEMPERATURE = 0.2
 GEMINI_API_KEY_ENV = "GEMINI_API_KEY"
 DEFAULT_CONFIG_PATH = Path("config.json")
 
@@ -37,7 +38,11 @@ def load_api_key(config_path: Path = DEFAULT_CONFIG_PATH) -> str:
 # generate a report using the Gemini API
 def generate_report(system_prompt: str, user_prompt: str) -> str:
     genai.configure(api_key=load_api_key())
-    model = genai.GenerativeModel(GEMINI_MODEL, system_instruction=system_prompt)
+    model = genai.GenerativeModel(
+        GEMINI_MODEL,
+        system_instruction=system_prompt,
+        generation_config=genai.GenerationConfig(temperature=GEMINI_TEMPERATURE),
+    )
     response = model.generate_content(user_prompt)
 
     if not response.text:
