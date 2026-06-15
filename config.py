@@ -1,9 +1,12 @@
 from __future__ import annotations
 import json
 import os
+import platform
+import subprocess
 from pathlib import Path
 
 GEMINI_API_KEY_ENV = "GEMINI_API_KEY"
+LLM_ADVISOR_VENV_DIR_ENV = "LLM_ADVISOR_VENV_DIR"
 _PROJECT_DIR = Path(__file__).resolve().parent
 DEFAULT_CONFIG_PATH = _PROJECT_DIR / "config.json"
 
@@ -49,3 +52,29 @@ def save_api_key(api_key: str, config_path: Path = DEFAULT_CONFIG_PATH) -> None:
     if not key:
         raise ValueError("API key cannot be empty.")
     config_path.write_text(json.dumps({"api_key": key}, indent=2) + "\n", encoding="utf-8")
+
+def reset_config(config_path: Path = DEFAULT_CONFIG_PATH) -> bool:
+    if config_path.is_file():
+        config_path.unlink()
+        return True
+    return False
+
+def _schedule_remove_path(target: Path) -> None:
+    path = str(target.resolve())
+    if platform.system() == "Windows":
+        subprocess.Popen(
+            ["powershell", "-NoProfile", "-Command", f"Start-Sleep -Seconds 2; Remove-Item -LiteralPath '{path}' -Recurse -Force -ErrorAction SilentlyContinue"],
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
+        return
+    subprocess.Popen(["sh", "-c", f"sleep 2 && rm -rf '{path}'"], start_new_session=True)
+
+def schedule_bootstrap_venv_removal() -> bool:
+    venv_dir = os.environ.get(LLM_ADVISOR_VENV_DIR_ENV, "").strip()
+    if not venv_dir:
+        return False
+    path = Path(venv_dir).resolve()
+    if not path.is_dir():
+        return False
+    _schedule_remove_path(path)
+    return True

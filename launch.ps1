@@ -127,6 +127,8 @@ try {
         Die "Failed to install dependencies from $RequirementsFile"
     }
 
+    $env:LLM_ADVISOR_VENV_DIR = $VenvDir
+
     & $VenvPython $AdvisorFile @args
     exit $LASTEXITCODE
 }

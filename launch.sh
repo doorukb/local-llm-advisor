@@ -84,4 +84,6 @@ if ! "$VENV_PYTHON" -m pip install -r "$REQUIREMENTS_FILE"; then
   die "Failed to install dependencies from $REQUIREMENTS_FILE"
 fi
 
+export LLM_ADVISOR_VENV_DIR="$VENV_DIR"
+
 exec "$VENV_PYTHON" "$ADVISOR_FILE" "$@"
