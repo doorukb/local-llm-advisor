@@ -27,6 +27,28 @@ _OLLAMA_CONTEXT_GUIDANCE = {
     "Long (32K+)": "Recommend num_ctx 32768+ only when VRAM/RAM supports it; warn if hardware is insufficient",
 }
 
+LLAMA_CPP_ENGINE = "llama.cpp"  # must match gui.INFERENCE_ENGINES[1]
+
+_LLAMA_CPP_USE_CASE_GUIDANCE = {
+    "General chat": "--temp 0.7 --top-p 0.9; conversational system prompt",
+    "Coding assistant": "--temp 0.2 --top-p 0.95; system prompt for precise, runnable code",
+    "Document Q&A": "--temp 0.3 --top-p 0.9; system prompt for grounded answers",
+    "Creative writing": "--temp 0.85 --top-p 0.95; system prompt for vivid prose",
+    "Summarization": "--temp 0.3 --top-p 0.85; system prompt for concise summaries",
+}
+
+_LLAMA_CPP_CONTEXT_GUIDANCE = {
+    "Short (2K-4K)": "Set -c 2048-4096; minimizes KV-cache VRAM",
+    "Medium (8K-16K)": "Set -c 8192-16384; balance context vs VRAM",
+    "Long (32K+)": "Set -c 32768+ only when VRAM/RAM supports it; reduce -c if OOM risk",
+}
+
+_LLAMA_CPP_PERFORMANCE_GUIDANCE = {
+    "Speed (tokens/sec)": "Favor higher -ngl when VRAM allows, smaller quant (Q4), lower -c if needed",
+    "Quality (best output at hardware limits)": "Favor higher quant (Q5/Q8) within VRAM; max sensible -ngl",
+    "Balanced": "Balance -ngl, quant, and -c for stable throughput and quality",
+}
+
 class CpuInfo(TypedDict):
     model: str
     cores: int
@@ -185,6 +207,62 @@ def format_ollama_output_instructions(selections: UserSelections) -> str | None:
         ]
     )
 
+def format_llama_cpp_output_instructions(selections: UserSelections) -> str | None:
+    if selections["inference_engine"] != LLAMA_CPP_ENGINE:
+        return None
+
+    use_case = selections["primary_use_case"]
+    context_pref = selections["context_length"]
+    performance = selections["performance_priority"]
+    use_case_guidance = _LLAMA_CPP_USE_CASE_GUIDANCE.get(use_case,
+        "--temp 0.7 --top-p 0.9; system prompt suited to the selected use case",
+    )
+    context_guidance = _LLAMA_CPP_CONTEXT_GUIDANCE.get(context_pref,
+        "Set -c appropriate for the user's context preference and hardware",
+    )
+    performance_guidance = _LLAMA_CPP_PERFORMANCE_GUIDANCE.get(performance,
+        "Balance -ngl, quant, and -c for stable throughput and quality",
+    )
+
+    return "\n".join(
+        [
+            "## llama.cpp Output Requirements",
+            "",
+            "The user selected llama.cpp as their inference engine. For every model you recommend, "
+            "include a dedicated subsection titled with the model name containing all items below. "
+            "Use GGUF model paths/names from the Hugging Face catalog data when available.",
+            "",
+            "### Per recommended model",
+            "",
+            "1. Run command",
+            "   - Provide a complete `./llama-cli` command (interactive) OR `./llama-server` command (API), "
+            "including the path or filename of the recommended GGUF quantization.",
+            "   - Include at minimum: -m, -ngl, -c, -t, and flags appropriate for the use case and hardware.",
+            "   - Also consider when relevant: --mlock, -b, -n, --temp, --top-p, --repeat-penalty.",
+            "   - Present the command in a markdown code block in your report.",
+            "",
+            f"2. Flag explanations (use case: {use_case}; performance: {performance})",
+            "   - After the command, explain each flag in plain language tied to the user's detected CPU, "
+            "RAM, and GPU/VRAM from the hardware section.",
+            f"   - Sampling guidance for this use case: {use_case_guidance}",
+            f"   - Performance tuning guidance: {performance_guidance}",
+            "",
+            f"3. Context window (preference: {context_pref})",
+            f"   - {context_guidance}",
+            "   - Explain how -c interacts with KV-cache memory on this hardware.",
+            "",
+            "4. n-gpu-layers (-ngl) tuning",
+            "   - Recommend a specific -ngl value for the user's VRAM (or state -ngl 0 for CPU-only).",
+            "   - Explain the tradeoff between raising -ngl (faster, more VRAM) and lowering it "
+            "(slower, fits larger models/context).",
+            "   - If no discrete GPU was detected, recommend CPU-only settings and realistic "
+            "throughput expectations.",
+            "",
+            "Do not recommend GGUF quants the hardware cannot load. If only a lower quant or smaller -c "
+            "fits, state the tradeoff explicitly.",
+        ]
+    )
+
 def _format_model_list(title: str, models: list[ModelEntry]) -> str:
     lines = [title + ":"]
     for model in models:
@@ -231,3 +309,13 @@ if __name__ == "__main__":
         "inference_engine": "llama.cpp",
     }
     assert format_ollama_output_instructions(llama_cpp_selections) is None
+
+    print("--- llama.cpp engine demo ---")
+    print(format_hardware_context(hardware))
+    print()
+    print(format_selections_context(llama_cpp_selections))
+    print()
+    llama_cpp_instructions = format_llama_cpp_output_instructions(llama_cpp_selections)
+    if llama_cpp_instructions:
+        print(llama_cpp_instructions)
+    assert format_llama_cpp_output_instructions(selections) is None
