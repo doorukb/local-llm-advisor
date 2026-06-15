@@ -8,7 +8,10 @@ import requests
 
 OLLAMA_LIBRARY_URL = "https://ollama.com/library"
 OLLAMA_LIBRARY_PARAMS = {"sort": "popular"}
-REQUEST_TIMEOUT = 30
+REQUEST_TIMEOUT = 10
+
+_ollama_fetch_available: bool = True
+_huggingface_fetch_available: bool = True
 
 _CARD_PATTERN = re.compile(r"<li x-test-model\b.*?</li>", re.DOTALL)
 _TITLE_PATTERN = re.compile(r'x-test-model-title[^>]*\btitle="([^"]+)"')
@@ -25,6 +28,18 @@ class OllamaModelEntry(TypedDict):
     description: str
 
 ModelEntry = OllamaModelEntry
+
+class FetchResult(TypedDict):
+    ollama: list[ModelEntry]
+    huggingface: list[ModelEntry]
+    ollama_available: bool
+    huggingface_available: bool
+
+def ollama_fetch_available() -> bool:
+    return _ollama_fetch_available
+
+def huggingface_fetch_available() -> bool:
+    return _huggingface_fetch_available
 
 HF_API_MODELS_URL = "https://huggingface.co/api/models"
 HF_ARCHITECTURE_FAMILIES = ("llama", "mistral", "qwen", "phi", "gemma", "deepseek")
@@ -103,7 +118,15 @@ def _parse_ollama_library(html_text: str) -> list[_ParsedOllamaCard]:
     return cards
 
 def fetch_ollama_models() -> list[OllamaModelEntry]:
-    html_text = _fetch_ollama_library_html()
+    global _ollama_fetch_available
+    _ollama_fetch_available = True
+
+    try:
+        html_text = _fetch_ollama_library_html()
+    except requests.RequestException:
+        _ollama_fetch_available = False
+        return []
+
     parsed = _parse_ollama_library(html_text)
 
     models: list[OllamaModelEntry] = []
@@ -220,11 +243,19 @@ def _parse_hf_model(raw: dict, family: str) -> ModelEntry | None:
     }
 
 def fetch_huggingface_models() -> list[ModelEntry]:
+    global _huggingface_fetch_available
+    _huggingface_fetch_available = True
+
     seen: set[str] = set()
     models: list[ModelEntry] = []
 
     for family in HF_ARCHITECTURE_FAMILIES:
-        for raw in _fetch_hf_models_for_family(family):
+        try:
+            raw_models = _fetch_hf_models_for_family(family)
+        except requests.RequestException:
+            continue
+
+        for raw in raw_models:
             repo_id = raw.get("id") or raw.get("modelId")
             if not repo_id or repo_id in seen:
                 continue
@@ -234,12 +265,25 @@ def fetch_huggingface_models() -> list[ModelEntry]:
             seen.add(repo_id)
             models.append(entry)
 
+    if not models:
+        _huggingface_fetch_available = False
     return models
 
+def fetch_all() -> FetchResult:
+    ollama = fetch_ollama_models()
+    huggingface = fetch_huggingface_models()
+    return {
+        "ollama": ollama,
+        "huggingface": huggingface,
+        "ollama_available": ollama_fetch_available(),
+        "huggingface_available": huggingface_fetch_available(),
+    }
+
 if __name__ == "__main__":
-    ollama_models = fetch_ollama_models()
-    print(f"Ollama: {len(ollama_models)} models")
-    hf_models = fetch_huggingface_models()
-    print(f"Hugging Face: {len(hf_models)} models")
-    if hf_models:
-        print(hf_models[0])
+    result = fetch_all()
+    print(f"Ollama: {len(result['ollama'])} (available={result['ollama_available']})")
+    print(f"Hugging Face: {len(result['huggingface'])} (available={result['huggingface_available']})")
+    if result["ollama"]:
+        print(result["ollama"][0])
+    if result["huggingface"]:
+        print(result["huggingface"][0])
