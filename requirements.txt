@@ -1,5 +1,6 @@
 google-generativeai
 psutil
+py-cpuinfo
 GPUtil
 requests
 customtkinter
