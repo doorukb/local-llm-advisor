@@ -1,5 +1,6 @@
 from __future__ import annotations
 import tkinter as tk
+from collections.abc import Callable
 import customtkinter as ctk
 
 INFERENCE_ENGINES = ("Ollama", "llama.cpp", "LM Studio")
@@ -56,16 +57,6 @@ def get_selections(
         "performance_priority": performance_priority_var.get(),
     }
 
-# analyze the selections and print the report
-def on_analyze(
-    engine_combo: ctk.CTkComboBox,
-    use_case_combo: ctk.CTkComboBox,
-    context_length_var: tk.StringVar,
-    performance_priority_var: tk.StringVar,
-) -> None:
-    selections = get_selections(engine_combo, use_case_combo, context_length_var, performance_priority_var)
-    print(selections)
-
 def _add_labeled_combobox(parent: ctk.CTkFrame, row: int, label_text: str, values: tuple[str, ...], label_font: ctk.CTkFont) -> ctk.CTkComboBox:
     ctk.CTkLabel(parent, text=label_text, font=label_font, anchor="e").grid(row=row, column=0, sticky="e", padx=LABEL_PAD, pady=ROW_PAD_Y)
 
@@ -107,7 +98,7 @@ def _save_report(report_text: ctk.CTkTextbox, parent: ctk.CTk) -> None:
         f.write(content)
 
 # open the main window and block until the user closes it; Analyze button and report area
-def run_gui() -> None:
+def run_gui(analyze_callback: Callable[[dict[str, str]], str] | None = None) -> None:
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("blue")
 
@@ -119,18 +110,21 @@ def run_gui() -> None:
     label_font = ctk.CTkFont(size=13)
     section_font = ctk.CTkFont(size=14, weight="bold")
 
+    # add the window
     window.grid_columnconfigure(0, weight=1)
     window.grid_rowconfigure(0, weight=0)
     window.grid_rowconfigure(1, weight=1)
 
+    # add the input frame
     input_frame = ctk.CTkFrame(window, fg_color="transparent")
     input_frame.grid(row=0, column=0, sticky="ew", padx=OUTER_PAD_X, pady=INPUT_PAD_Y)
     input_frame.grid_columnconfigure(0, minsize=LABEL_COL_MINSIZE)
     input_frame.grid_columnconfigure(1, weight=1)
 
+    # add the dropdown menus and radio buttons
     engine_combo = _add_labeled_combobox(input_frame, row=0, label_text="Inference engine", values=INFERENCE_ENGINES, label_font=label_font)
     use_case_combo = _add_labeled_combobox(input_frame, row=1, label_text="Primary use case", values=PRIMARY_USE_CASES, label_font=label_font)
-
+    # add the context length radio buttons
     context_length_var = tk.StringVar(value=CONTEXT_LENGTH_OPTIONS[0])
     performance_priority_var = tk.StringVar(value=PERFORMANCE_PRIORITY_OPTIONS[0])
 
@@ -155,7 +149,6 @@ def run_gui() -> None:
         text="Analyze",
         width=BUTTON_WIDTH,
         font=label_font,
-        command=lambda: on_analyze(engine_combo, use_case_combo, context_length_var, performance_priority_var),
     )
     analyze_button.grid(row=4, column=1, sticky="w", pady=(16, 0))
 
@@ -182,6 +175,17 @@ def run_gui() -> None:
         command=lambda: _save_report(report_text, window),
     )
     save_button.grid(row=0, column=1, sticky="e")
+
+    # handle the analyze button
+    def _handle_analyze() -> None:
+        selections = get_selections(engine_combo, use_case_combo, context_length_var, performance_priority_var)
+        if analyze_callback is None:
+            print(selections)
+            return
+        report = analyze_callback(selections)
+        _set_report_content(report_text, report, save_button)
+
+    analyze_button.configure(command=_handle_analyze)
 
     window.mainloop()
 
