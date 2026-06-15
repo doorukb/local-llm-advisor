@@ -72,11 +72,31 @@ def _create_report_textbox(parent: ctk.CTkFrame) -> ctk.CTkTextbox:
     return report_text
 
 # Phase 7 calls this to populate the report
-def _set_report_content(report_text: ctk.CTkTextbox, content: str) -> None:
+def _set_report_content(
+    report_text: ctk.CTkTextbox,
+    content: str,
+    save_button: ctk.CTkButton | None = None,
+) -> None:
     report_text.configure(state="normal")
     report_text.delete("1.0", "end")
     report_text.insert("1.0", content)
     report_text.configure(state="disabled")
+    if save_button is not None:
+        save_button.configure(state="normal")
+
+# opens save dialog and writes textbox content to disk
+def _save_report(report_text: ctk.CTkTextbox, parent: ctk.CTk) -> None:
+    path = tk.filedialog.asksaveasfilename(
+        parent=parent,
+        title="Save report",
+        defaultextension=".txt",
+        filetypes=[("Text files", "*.txt"), ("All files", "*.*")],
+    )
+    if not path:
+        return
+    content = report_text.get("1.0", "end-1c")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content)
 
 # open the main window and block until the user closes it; Analyze button and report area
 def run_gui() -> None:
@@ -139,10 +159,22 @@ def run_gui() -> None:
     report_frame.grid_columnconfigure(0, weight=1)
     report_frame.grid_rowconfigure(1, weight=1)
 
-    ctk.CTkLabel(report_frame, text="Report").grid(row=0, column=0, sticky="w", pady=(0, 8))
+    header_frame = ctk.CTkFrame(report_frame, fg_color="transparent")
+    header_frame.grid(row=0, column=0, sticky="ew", pady=(0, 8))
+    header_frame.grid_columnconfigure(0, weight=1)
+
+    ctk.CTkLabel(header_frame, text="Report").grid(row=0, column=0, sticky="w")
 
     report_text = _create_report_textbox(report_frame)
     report_text.grid(row=1, column=0, sticky="nsew")
+
+    save_button = ctk.CTkButton(
+        header_frame,
+        text="Save report",
+        state="disabled",
+        command=lambda: _save_report(report_text, window),
+    )
+    save_button.grid(row=0, column=1, sticky="e")
 
     window.mainloop()
 
