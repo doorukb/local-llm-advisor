@@ -6,7 +6,7 @@ from google.api_core import exceptions as google_api_exceptions
 from google.generativeai.types import generation_types
 from config import load_api_key
 
-GEMINI_MODEL = "gemini-1.5-flash"
+GEMINI_MODEL = "gemini-2.5-flash"
 GEMINI_TEMPERATURE = 0.2
 GEMINI_REQUEST_TIMEOUT = 120
 

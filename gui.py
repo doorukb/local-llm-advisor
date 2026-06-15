@@ -2,6 +2,7 @@ from __future__ import annotations
 import threading
 import tkinter as tk
 from collections.abc import Callable
+from tkinter import filedialog
 from tkinter import font as tkfont
 import customtkinter as ctk
 from advisor import STATUS_FETCHING, STATUS_GENERATING
@@ -162,7 +163,7 @@ def _prompt_api_key(parent: ctk.CTk) -> None:
 
 # opens save dialog and writes textbox content to disk
 def _save_report(report_text: ctk.CTkTextbox, parent: ctk.CTk) -> None:
-    path = tk.filedialog.asksaveasfilename(parent=parent, title="Save report", defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
+    path = filedialog.asksaveasfilename(parent=parent, title="Save report", defaultextension=".txt", filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
     if not path:
         return
     content = report_text.get("1.0", "end-1c")

@@ -6,7 +6,7 @@ A simple, zero-installation terminal script that analyzes your hardware and reco
 
 ## What It Does
 
-Local-LLM-Advisor reads your system hardware automatically, asks you a small set of fixed questions about your preferred inference engine and use case, fetches the current model libraries from Ollama and Hugging Face at runtime, and sends all of that to Gemini 1.5 Flash. The model reasons over your actual hardware against the current model landscape and returns a structured report telling you exactly what you can run, how fast, and how to run it.
+Local-LLM-Advisor reads your system hardware automatically, asks you a small set of fixed questions about your preferred inference engine and use case, fetches the current model libraries from Ollama and Hugging Face at runtime, and sends all of that to Gemini 2.5 Flash. The model reasons over your actual hardware against the current model landscape and returns a structured report telling you exactly what you can run, how fast, and how to run it.
 
 No hardcoded model lists. No stale recommendations. No free-text input surface for the LLM to drift on.
 
@@ -45,9 +45,9 @@ Before calling Gemini, the script fetches:
 
 This data is injected into the prompt as context. The LLM reasons over what is actually available right now, not what was in its training data at cutoff. This keeps recommendations current as new models are released without any changes to the codebase.
 
-**Step 4 - Gemini 1.5 Flash inference**
+**Step 4 - Gemini 2.5 Flash inference**
 
-A fully hardcoded, structured prompt is assembled from the detected hardware, the user's selections, and the fetched model data. The prompt is sent to Gemini 1.5 Flash using the user's own API key. The prompt instructs the model to return a formatted report and nothing else. There is no conversational loop, no follow-up turns, no free-text channel.
+A fully hardcoded, structured prompt is assembled from the detected hardware, the user's selections, and the fetched model data. The prompt is sent to Gemini 2.5 Flash using the user's own API key. The prompt instructs the model to return a formatted report and nothing else. There is no conversational loop, no follow-up turns, no free-text channel.
 
 **Step 5 - Report display**
 
@@ -76,7 +76,7 @@ The report structure branches on the engine the user selected.
 
 ## Requirements
 
-- A free Gemini 1.5 Flash API key from [Google AI Studio](https://aistudio.google.com) (takes under 90 seconds, requires a Google account)
+- A free Gemini 2.5 Flash API key from [Google AI Studio](https://aistudio.google.com) (takes under 90 seconds, requires a Google account)
 - Internet connection at runtime (for the Gemini call and the live model fetch)
 - Python 3.9 or later (only required if using the manual install path)
 
@@ -98,7 +98,7 @@ curl -fsSL https://raw.githubusercontent.com/doorukb/Local-LLM-Advisor/main/laun
 irm https://raw.githubusercontent.com/doorukb/Local-LLM-Advisor/main/launch.ps1 | iex
 \```
 
-That is the entire setup. The script checks for Python, creates an isolated virtual environment, installs dependencies into it, and launches the advisor. On first run you will be prompted to enter your Gemini API key once. You can enter any valid Google Gemini API Key (Google AI Studio key) and the script will automatically route the requests to the free Gemini 1.5 Flash model, and it will cost absolutely nothing.
+That is the entire setup. The script checks for Python, creates an isolated virtual environment, installs dependencies into it, and launches the advisor. On first run you will be prompted to enter your Gemini API key once. You can enter any valid Google Gemini API Key (Google AI Studio key) and the script will automatically route the requests to the free Gemini 2.5 Flash model, and it will cost absolutely nothing.
 
 The window opens, you make your selections, you get your report, you close the window. The virtual environment is self-contained in a temporary directory and does not affect your global Python installation.
 
@@ -164,7 +164,7 @@ This project is open source. You can read every line of code that runs. There ar
 
 ## API Key
 
-This tool is designed specifically for **Gemini 1.5 Flash** via the Google Generative AI Python SDK. Other Gemini models or other providers are not supported in this version. The Gemini 1.5 Flash free tier allows 1,500 requests per day, which is more than sufficient for any personal usage of this tool.
+This tool is designed specifically for **Gemini 2.5 Flash** via the Google Generative AI Python SDK. Other Gemini models or other providers are not supported in this version. The Gemini 2.5 Flash free tier allows 1,500 requests per day, which is more than sufficient for any personal usage of this tool.
 
 Get a key at: https://aistudio.google.com
 
