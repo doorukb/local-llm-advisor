@@ -1,6 +1,6 @@
 # Local-LLM-Advisor
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/doorukb/Local-LLM-Advisor/actions/workflows/ci.yml/badge.svg)](https://github.com/doorukb/Local-LLM-Advisor/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A simple, zero-installation terminal script that analyzes your hardware and recommends the best local AI models you can reliably run. You run it, make a few selections, get a detailed report, close the window. No servers, no accounts beyond a free Gemini API key, no trace left behind.
 
